@@ -18,7 +18,7 @@ datalessLoc = '/APPS/metadata/SEED/'
 debug = False
 
 #Network we are running this on
-net = 'IU'
+net = 'CU'
 		
 
 #Read in the dataless
@@ -68,7 +68,7 @@ def checkSta(sta):
 				print 'Sample rate problem: ' + sta + ' ' + str(year) + str(day).zfill(3) + ' ' + chan[0] + ' ' + chan[1]
 			if chanName[0] == 'V' and float(chan[3]) != .1:
 				print 'Sample rate problem: ' + sta + ' ' + str(year) + str(day).zfill(3) + ' ' + chan[0] + ' ' + chan[1]
-			if chanName[0] == 'B' and float(chan[3]) >= 20:
+			if chanName[0] == 'B' and float(chan[3]) < 20:
 				print 'Sample rate problem: ' + sta + ' ' + str(year) + str(day).zfill(3) + ' ' + chan[0] + ' ' + chan[1]
 	return	
 

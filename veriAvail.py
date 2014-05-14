@@ -68,7 +68,7 @@ def checkSta(sta):
 				print 'Sample rate problem: ' + sta + ' ' + str(year) + str(day).zfill(3) + ' ' + chan[0] + ' ' + chan[1]
 			if chanName[0] == 'V' and float(chan[3]) != .1:
 				print 'Sample rate problem: ' + sta + ' ' + str(year) + str(day).zfill(3) + ' ' + chan[0] + ' ' + chan[1]
-			if chanName[0] == 'B' and float(chan[3]) < 20:
+			if chanName[0] == 'B' and float(chan[3]) not in [20.0,40.0]:
 				print 'Sample rate problem: ' + sta + ' ' + str(year) + str(day).zfill(3) + ' ' + chan[0] + ' ' + chan[1]
 	return	
 
@@ -102,13 +102,6 @@ for year in years:
 	print str(year)
 	#Setup defualt processor pool
 	pool = Pool()
-	staList = getstalist(sp,UTCDateTime(str(year) + str(1).zfill(3) + "T00:00:00.0"),'IU')
+	staList = getstalist(sp,UTCDateTime(str(year) + str(1).zfill(3) + "T00:00:00.0"), net)
 	#Here are the processors we are running
 	pool.map(checkSta,staList)
-
-
-
-
-
-
-	

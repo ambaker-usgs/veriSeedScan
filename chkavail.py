@@ -6,6 +6,7 @@ import argparse
 
 from obspy import UTCDateTime, read
 from obspy.fdsn import Client
+from obspy.neic import Client as ClientNEIC
 from multiprocessing import Pool
 
 ###################################################################################################
@@ -48,6 +49,14 @@ def args():
 	parser.add_argument('-d','--debug',action = "store_true",dest="debug", \
 		default = False, help="Run in debug mode")
 
+#Here is the NEIC CWB
+	parser.add_argument('-NEIC',action = "store_true",dest="neic", \
+		default = False, help="Check the NEIC CWB")
+
+#Here is the ASL CWB
+	parser.add_argument('-ASL',action = "store_true",dest="asl", \
+		default = False, help="Check the ASL CWB")
+
 #Here is the quality flag for Tyler
 	parser.add_argument('-q',action = "store",dest = "quality", \
 		default = "M", help = "Data quality type: D,Q,...")
@@ -71,7 +80,7 @@ def checkAvail(string):
 	string = string.split(",")
 	year = int(string[0])
 	jday = int(string[1])
-
+	print 'On day ' + str(jday).zfill(3) + ' ' + str(year)
 
 	startTime = UTCDateTime(str(year) + str(jday).zfill(3) + "T00:00:00.000")
 	endTime = startTime + 24*60*60
@@ -87,7 +96,7 @@ def checkAvail(string):
 	
 
 	for index, dataTrace in enumerate(dataOnTr1):
-
+		#if True:
 		try:
 #tr1 availability
 			trtr1 = read(dataTrace)
@@ -110,29 +119,98 @@ def checkAvail(string):
 
 #Here is the IRIS availability
 			if availxs0 < 0.999 or availtr1 < 0.999:
-				trIRIS = client.get_waveforms(net,trxs0[0].stats.station, \
-					trxs0[0].stats.location, trxs0[0].stats.channel, \
-					startTime,endTime,quality=qualval)
-				trIRIS.merge()
-				availIRIS = 0
-				for tr in trIRIS:
-					availIRIS += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)
-				if debug:
-					print 'IRIS avail: ' + str(availIRIS*100) + '%'		
+				try:
+					trIRIS = client.get_waveforms(net,trxs0[0].stats.station, \
+						trxs0[0].stats.location, trxs0[0].stats.channel, \
+						startTime,endTime,quality=qualval)
+					trIRIS.merge()
+					availIRIS = 0
+					for tr in trIRIS:
+						availIRIS += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)
+					if debug:
+						print 'IRIS avail: ' + str(availIRIS*100) + '%'	
+				except:
+					availIRIS = 0	
+				
+
+#Here we check the NEIC availability
 				availIRIS = round(availIRIS,3)
 				availxs0 = round(availxs0,3)
 				availtr1 = round(availtr1,3)
-				if availIRIS != availxs0 or availIRIS != availtr1:
-					availString = trIRIS[0].stats.station + ' ' + trIRIS[0].stats.location + \
-					' ' + trIRIS[0].stats.channel + ' ' + str(year) + ' ' + \
-					str(jday).zfill(3) + ' IRIS: ' + str(availIRIS*100) + \
-					' ' + netpath + ': ' + str(availxs0*100) + ' tr1: ' + str(availtr1*100)
-					allAvailString.append(availString)
-					print availString
+				availString = trIRIS[0].stats.station + ',' + trIRIS[0].stats.location + \
+							',' + trIRIS[0].stats.channel + ',' + str(year) + ',' + \
+							str(jday).zfill(3) + ',' + str(availIRIS*100) + \
+							','  + str(availxs0*100) + ',' + str(availtr1*100)
+
+
+				if parserval.neic and not parserval.asl:
+					try:
+						trNEIC = clientNEIC.getWaveform(net,trxs0[0].stats.station, \
+							trxs0[0].stats.location, trxs0[0].stats.channel, \
+							startTime,endTime)
+						trNEIC.merge()
+						availNEIC = 0
+						for tr in trNEIC:
+							availNEIC += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)
+						availNEIC = round(availNEIC,3)
+					except:
+						availNEIC = 0
+					if availIRIS != availxs0 or availIRIS != availtr1 or availNEIC != availtr1:
+						availString += ',' + str(availNEIC*100) 
+						allAvailString.append(availString)
+						print availString
+				elif parserval.asl and not parserval.neic:
+					try:
+						trASL = clientASL.getWaveform(net,trxs0[0].stats.station, \
+							trxs0[0].stats.location, trxs0[0].stats.channel, \
+							startTime,endTime)
+						trASL.merge()
+						availASL = 0
+						for tr in trASL:
+							availASL += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)
+						availASL = round(availASL,3)
+					except:
+						availASL = 0
+					if availIRIS != availxs0 or availIRIS != availtr1 or availASL != availtr1:
+						availString += ',' + str(availASL*100) 
+						allAvailString.append(availString)
+						print availString
+
+				elif parserval.asl and parserval.neic:
+					trASL = clientASL.getWaveform(net,trxs0[0].stats.station, \
+						trxs0[0].stats.location, trxs0[0].stats.channel, \
+						startTime,endTime)
+					trASL.merge()
+					availASL = 0
+					for tr in trASL:
+						availASL += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)
+					availASL = round(availASL,3)
+					
+					trNEIC = clientNEIC.getWaveform(net,trxs0[0].stats.station, \
+						trxs0[0].stats.location, trxs0[0].stats.channel, \
+						startTime,endTime)
+					trNEIC.merge()
+					availNEIC = 0
+					for tr in trNEIC:
+						availNEIC += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)
+					availNEIC = round(availNEIC,3)
+					
+					if availIRIS != availxs0 or availIRIS != availtr1 or availNEIC != availtr1 or availASL != availtr1:
+						availString += ',' + str(availNEIC*100) + ',' + str(availASL*100)
+						allAvailString.append(availString)
+						print availString
+
+
+			
+
+				else:				
+					if availIRIS != availxs0 or availIRIS != availtr1:
+						allAvailString.append(availString)
+						print availString
 				
 		except:
 			print 'Problem with: ' + dataTrace
-	f = open("avail" + str(year) + net,"a")
+	f = open("avail" + str(year) + net + '.csv',"a")
 	for curavail in allAvailString:	
 		print 'Writing to file'
 		f.write(curavail + "\n")
@@ -154,12 +232,28 @@ debug = parserval.debug
 sday = parserval.sday
 eday = parserval.eday
 qualval = parserval.quality
+if parserval.neic:
+	clientNEIC = ClientNEIC()
+
+if parserval.asl:
+	clientASL = ClientNEIC(host='136.177.121.27')
 
 
-
-
+#Lets write the header to the csv file
 if os.path.isfile("avail" + str(year) + net):
 	os.remove("avail" + str(year) + net)
+
+f = open("avail" + str(year) + net + '.csv',"w")
+f.write("Sta,Loc,Chan,Year,Day,IRIS,xs,tr1")
+if parserval.neic and not parserval.asl:
+	f.write(",NEICCWB\n")
+elif parserval.asl and not parserval.asl:
+	f.write(",ASLCWB\n")
+elif parserval.neic and parserval.asl:
+	f.write(",NEICCWB,ASLCWB\n")
+else:
+	f.write("\n")
+f.close()
 
 #Here we loop over the days
 sendToavail=[]

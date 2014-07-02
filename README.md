@@ -26,9 +26,8 @@ This program checks the availability of data at different sources
 Usage
 -----
 
-chkavail.py -h
-usage: chkavail.py [-h] -n NET [-s STA] -y YEAR -sd SDAY -ed EDAY [-d]
-                   [-q QUALITY]
+usage: chkavail.py [-h] -n NET [-s STA] -y YEAR -sd SDAY -ed EDAY [-d] [-NEIC]
+                   [-ASL] [-q QUALITY]
 
 Code to compare data availability
 
@@ -40,7 +39,10 @@ optional arguments:
   -sd SDAY     Start day: DDD
   -ed EDAY     End day: DDD
   -d, --debug  Run in debug mode
+  -NEIC        Check the NEIC CWB
+  -ASL         Check the ASL CWB
   -q QUALITY   Data quality type: D,Q,...
+
 
 Example
 -------

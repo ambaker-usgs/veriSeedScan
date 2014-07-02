@@ -16,7 +16,7 @@ from math import isnan
 #This program verifies gaps for obspy, Mustang, DCC, and Seedscan
 ###################################################################################################
 
-debug = True
+debug = False
 
 #This is the main program which is called as a function to allow for multi-threading
 def veriGaps(string):
@@ -132,7 +132,9 @@ SELECT "tblGroup".name, tblStation.name, tblChannel.name, tblMetric.name, value,
 		conn.close()	
 	except:
 		seedScanGaps = float('nan')
-	if DCCgaps != gaps or gaps != mustangGapsTotal or gaps != seedScanGaps:
+	if isnan(DCCgaps) and isnan(gaps) and isnan(mustangGapsTotal) and isnan(seedScanGaps):
+		return
+	elif DCCgaps != gaps or gaps != mustangGapsTotal or gaps != seedScanGaps:
 		print year + " " + day + " " + sta + " " + loc + " " + chan + " DCC gaps=" + \
 			str(DCCgaps) + " Obspy gaps=" + str(gaps) + " Mustang gaps=" + \
 			str(mustangGapsTotal) + " Seedscan gaps=" + str(seedScanGaps)	

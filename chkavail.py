@@ -243,7 +243,7 @@ if parserval.asl:
 if os.path.isfile("avail" + str(year) + net):
 	os.remove("avail" + str(year) + net)
 
-f = open("avail" + str(year) + net + '.csv',"w")
+f = open("avail" + str(year) + str(sday) + net + '.csv',"w")
 f.write("Sta,Loc,Chan,Year,Day,IRIS,xs,tr1")
 if parserval.neic and not parserval.asl:
 	f.write(",NEICCWB\n")

@@ -210,7 +210,7 @@ def checkAvail(string):
 				
 		except:
 			print 'Problem with: ' + dataTrace
-	f = open("avail" + str(year) + str(sday).zfill(3) + net + '.csv',"w")
+	f = open("avail" + str(year) + net + '.csv',"a")
 	for curavail in allAvailString:	
 		print 'Writing to file'
 		f.write(curavail + "\n")
@@ -240,10 +240,10 @@ if parserval.asl:
 
 
 #Lets write the header to the csv file
-if os.path.isfile("avail" + str(year) + str(sday).zfill(3) + net):
-	os.remove("avail" + str(year) + str(sday).zfill(3) + net)
+if os.path.isfile("avail" + str(year) + net):
+	os.remove("avail" + str(year) + net)
 
-f = open("avail" + str(year) + str(sday).zfill(3) + net + '.csv',"w")
+f = open("avail" + str(year) + net + '.csv',"w")
 f.write("Sta,Loc,Chan,Year,Day,IRIS,xs,tr1")
 if parserval.neic and not parserval.asl:
 	f.write(",NEICCWB\n")
@@ -263,7 +263,6 @@ for day in xrange(sday,eday,1):
 #Hwere we run everything as a multi-process
 pool = Pool()
 pool.map(checkAvail,sendToavail)
-
 
 
 

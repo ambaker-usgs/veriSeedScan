@@ -210,7 +210,7 @@ def checkAvail(string):
 				
 		except:
 			print 'Problem with: ' + dataTrace
-	f = open("avail" + str(year) + net + '.csv',"a")
+	f = open("avail" + str(year) + str(sday).zfill(3) + net + '.csv',"w")
 	for curavail in allAvailString:	
 		print 'Writing to file'
 		f.write(curavail + "\n")

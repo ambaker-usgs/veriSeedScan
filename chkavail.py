@@ -104,7 +104,6 @@ def checkAvail(string):
 				print '\n' + '*' * 80 + '\n' + '*' * 80
 				nptsBefore = nptsSum(trtr1)
 				print '\ntrTR1 points:', nptsBefore, '\n', trtr1
-			trtr1.merge()
 			availtr1 = 0
 			for tr in trtr1:
 				availtr1 += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)
@@ -119,7 +118,6 @@ def checkAvail(string):
 			if debug:
 				nptsBefore = nptsSum(trxs0)
 				print '\ntrXS0 points:', nptsBefore, '\n', trxs0
-			trxs0.merge()
 			availxs0 = 0
 			for tr in trxs0:
 				availxs0 += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)
@@ -135,7 +133,6 @@ def checkAvail(string):
 					if debug:
 						nptsBefore = nptsSum(trIRIS)
 						print '\ntrIRIS points:', nptsBefore, '\n', trIRIS
-					trIRIS.merge()
 					availIRIS = 0
 					for tr in trIRIS:
 						availIRIS += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)
@@ -165,7 +162,6 @@ def checkAvail(string):
 						if debug:
 							nptsBefore = nptsSum(trNEIC)
 							print '\ntrNEIC points:', nptsBefore, '\n', trNEIC
-						trNEIC.merge()
 						availNEIC = 0
 						for tr in trNEIC:
 							availNEIC += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)
@@ -186,7 +182,6 @@ def checkAvail(string):
 						if debug:
 							nptsBefore = nptsSum(trASL)
 							print '\ntrASL points:', nptsBefore, '\n', trASL
-						trASL.merge()
 						availASL = 0
 						for tr in trASL:
 							availASL += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)
@@ -207,7 +202,6 @@ def checkAvail(string):
 					if debug:
 						nptsBefore = nptsSum(trASL)
 						print '\ntrASL points:', nptsBefore, '\n', trASL
-					trASL.merge()
 					availASL = 0
 					for tr in trASL:
 						availASL += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)
@@ -221,7 +215,6 @@ def checkAvail(string):
 					if debug:
 						nptsBefore = nptsSum(trNEIC)
 						print '\ntrNEIC points:', nptsBefore, '\n', trNEIC
-					trNEIC.merge()
 					availNEIC = 0
 					for tr in trNEIC:
 						availNEIC += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)

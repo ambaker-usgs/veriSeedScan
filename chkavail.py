@@ -93,27 +93,36 @@ def checkAvail(string):
 	if debug:
 		print(globString)
 		print(dataOnTr1)
-	
+
 
 	for index, dataTrace in enumerate(dataOnTr1):
 		#if True:
 		try:
 #tr1 availability
 			trtr1 = read(dataTrace)
+			if debug:
+				print '\n' + '*' * 80 + '\n' + '*' * 80
+				nptsBefore = nptsSum(trtr1)
+				print '\ntrTR1 points:', nptsBefore, '\n', trtr1
 			trtr1.merge()
 			availtr1 = 0
 			for tr in trtr1:
 				availtr1 += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)
+			if debug:
+				print 'tr1 avialability:', str(availtr1 * 100) + '%'
 		
 #Here is the xs0 availability
 			trxs0 = dataTrace.replace('/tr1/telemetry_days','/' + netpath + '/seed')
 			trxs0 = trxs0.replace(str(year) + '_' + str(jday).zfill(3), \
 				str(year) + '_' + str(jday).zfill(3) + '_' + net + '_' + sta)
 			trxs0 = read(trxs0)
+			if debug:
+				nptsBefore = nptsSum(trxs0)
+				print '\ntrXS0 points:', nptsBefore, '\n', trxs0
 			trxs0.merge()
 			availxs0 = 0
 			for tr in trxs0:
-				availxs0 += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)		
+				availxs0 += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)
 			if debug:
 				print netpath + ' avail: ' + str(availxs0*100) + '%'
 
@@ -123,6 +132,9 @@ def checkAvail(string):
 					trIRIS = client.get_waveforms(net,trxs0[0].stats.station, \
 						trxs0[0].stats.location, trxs0[0].stats.channel, \
 						startTime,endTime,quality=qualval)
+					if debug:
+						nptsBefore = nptsSum(trIRIS)
+						print '\ntrIRIS points:', nptsBefore, '\n', trIRIS
 					trIRIS.merge()
 					availIRIS = 0
 					for tr in trIRIS:
@@ -130,8 +142,10 @@ def checkAvail(string):
 					if debug:
 						print 'IRIS avail: ' + str(availIRIS*100) + '%'	
 				except:
-					availIRIS = 0	
-				
+					availIRIS = 0
+				if debug:
+					print 'IRIS availability: ' + str(availIRIS*100) + '%'
+
 
 #Here we check the NEIC availability
 				availIRIS = round(availIRIS,3)
@@ -148,6 +162,9 @@ def checkAvail(string):
 						trNEIC = clientNEIC.getWaveform(net,trxs0[0].stats.station, \
 							trxs0[0].stats.location, trxs0[0].stats.channel, \
 							startTime,endTime)
+						if debug:
+							nptsBefore = nptsSum(trNEIC)
+							print '\ntrNEIC points:', nptsBefore, '\n', trNEIC
 						trNEIC.merge()
 						availNEIC = 0
 						for tr in trNEIC:
@@ -155,6 +172,8 @@ def checkAvail(string):
 						availNEIC = round(availNEIC,3)
 					except:
 						availNEIC = 0
+					if debug:
+						print 'GCWB avialability:', availGCWB * 100
 					if availIRIS != availxs0 or availIRIS != availtr1 or availNEIC != availtr1:
 						availString += ',' + str(availNEIC*100) 
 						allAvailString.append(availString)
@@ -164,6 +183,9 @@ def checkAvail(string):
 						trASL = clientASL.getWaveform(net,trxs0[0].stats.station, \
 							trxs0[0].stats.location, trxs0[0].stats.channel, \
 							startTime,endTime)
+						if debug:
+							nptsBefore = nptsSum(trASL)
+							print '\ntrASL points:', nptsBefore, '\n', trASL
 						trASL.merge()
 						availASL = 0
 						for tr in trASL:
@@ -171,6 +193,8 @@ def checkAvail(string):
 						availASL = round(availASL,3)
 					except:
 						availASL = 0
+					if debug:
+						print 'ASLCWB avialability:', availASL * 100
 					if availIRIS != availxs0 or availIRIS != availtr1 or availASL != availtr1:
 						availString += ',' + str(availASL*100) 
 						allAvailString.append(availString)
@@ -180,19 +204,29 @@ def checkAvail(string):
 					trASL = clientASL.getWaveform(net,trxs0[0].stats.station, \
 						trxs0[0].stats.location, trxs0[0].stats.channel, \
 						startTime,endTime)
+					if debug:
+						nptsBefore = nptsSum(trASL)
+						print '\ntrASL points:', nptsBefore, '\n', trASL
 					trASL.merge()
 					availASL = 0
 					for tr in trASL:
 						availASL += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)
+					if debug:
+						print 'ASLCWB avialability:', availASL * 100
 					availASL = round(availASL,3)
 					
 					trNEIC = clientNEIC.getWaveform(net,trxs0[0].stats.station, \
 						trxs0[0].stats.location, trxs0[0].stats.channel, \
 						startTime,endTime)
+					if debug:
+						nptsBefore = nptsSum(trNEIC)
+						print '\ntrNEIC points:', nptsBefore, '\n', trNEIC
 					trNEIC.merge()
 					availNEIC = 0
 					for tr in trNEIC:
 						availNEIC += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)
+					if debug:
+						print 'NEIC avialability:', availNEIC * 100
 					availNEIC = round(availNEIC,3)
 					
 					if availIRIS != availxs0 or availIRIS != availtr1 or availNEIC != availtr1 or availASL != availtr1:
@@ -201,23 +235,28 @@ def checkAvail(string):
 						print availString
 
 
-			
 
-				else:				
+
+				else:
 					if availIRIS != availxs0 or availIRIS != availtr1:
 						allAvailString.append(availString)
 						print availString
-				
+
 		except:
 			print 'Problem with: ' + dataTrace
 	f = open("avail" + str(year) + net + '.csv',"a")
-	for curavail in allAvailString:	
+	for curavail in allAvailString:
 		print 'Writing to file'
 		f.write(curavail + "\n")
-	f.close()	
+	f.close()
 	
-	return	
+	return
 
+def nptsSum(traces):
+	npts = 0
+	for index in range(len(traces)):
+		npts += traces[index].stats.npts
+	return npts
 
 
 
@@ -259,22 +298,7 @@ f.close()
 sendToavail=[]
 for day in xrange(sday,eday,1):
 	sendToavail.append(str(year) + "," + str(day).zfill(3))
-	
+
 #Hwere we run everything as a multi-process
 pool = Pool()
 pool.map(checkAvail,sendToavail)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

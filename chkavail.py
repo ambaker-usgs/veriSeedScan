@@ -43,7 +43,7 @@ def args():
 		default = 1, help="Start day: DDD", type = int, required = True)
 
 	parser.add_argument('-ed', action = "store",dest="eday", \
-		default = 1, help="End day: DDD", type = int, required = True)
+		default = 1, help="End day: DDD", type = int)
 
 #Here is verbose mode
 	parser.add_argument('-d','--debug',action = "store_true",dest="debug", \
@@ -269,7 +269,13 @@ year = parserval.year
 sta = parserval.sta
 debug = parserval.debug
 sday = parserval.sday
-eday = parserval.eday
+if parserval.eday != 1:
+	#If eday flag was parsed, set eday
+	eday = parserval.eday
+else:
+	#If eday has default value, set eday equal to sday
+	#This allows for one-day scans
+	eday = sday
 qualval = parserval.quality
 if parserval.neic:
 	clientNEIC = ClientNEIC()
@@ -296,7 +302,7 @@ f.close()
 
 #Here we loop over the days
 sendToavail=[]
-for day in xrange(sday,eday,1):
+for day in xrange(sday, eday + 1, 1):
 	sendToavail.append(str(year) + "," + str(day).zfill(3))
 
 #Hwere we run everything as a multi-process

@@ -97,6 +97,17 @@ def checkAvail(string):
 	globString = '/tr1/telemetry_days/' + net + '_' + sta +'/' + str(year) + '/' + \
 		str(year) + '_' + str(jday).zfill(3) + '/' + chan
 	dataOnTr1 = glob.glob(globString)
+
+	if len(dataOnTr1) == 0:
+		#If there is no data on /tr1/ then it checks /xs0/ or /xs1/ accordingly
+		if net in set(["IU","IC","CU"]):
+			globString = '/xs0/seed/' + net + '_' + sta +'/' + str(year) + '/' + \
+				str(year) + '_' + str(jday).zfill(3) + '_' + net + '_' + sta + '/' + chan
+			dataOnTr1 = glob.glob(globString)
+		else:
+			globString = '/xs1/seed/' + net + '_' + sta +'/' + str(year) + '/' + \
+				str(year) + '_' + str(jday).zfill(3) + '_' + net + '_' + sta + '/' + chan
+			dataOnTr1 = glob.glob(globString)
 	
 	if debug:
 		print(globString)
@@ -110,21 +121,28 @@ def checkAvail(string):
 				#To visually separate the channel location scans from one another
 				print '\n' + '*' * 80 + '\n' + '*' * 80
 #tr1 availability
-			trtr1 = read(dataTrace)
-			if debug:
-				nptsBefore = nptsSum(trtr1)
-				print '\ntrTR1 points:', nptsBefore, '\n', trtr1
-			availtr1 = 0
-			for tr in trtr1:
-				availtr1 += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)
-			if debug:
-				print 'tr1 avialability:', str(availtr1 * 100) + '%'
+			if 'tr1' in dataTrace:
+				trtr1 = read(dataTrace)
+				if debug:
+					nptsBefore = nptsSum(trtr1)
+					print '\ntrTR1 points:', nptsBefore, '\n', trtr1
+				availtr1 = 0
+				for tr in trtr1:
+					availtr1 += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)
+				if debug:
+					print 'tr1 avialability:', str(availtr1 * 100) + '%'
+			else:
+				availtr1 = 0
 		
 #Here is the xs0 availability
-			trxs0 = dataTrace.replace('/tr1/telemetry_days','/' + netpath + '/seed')
-			trxs0 = trxs0.replace(str(year) + '_' + str(jday).zfill(3), \
-				str(year) + '_' + str(jday).zfill(3) + '_' + net + '_' + sta)
-			trxs0 = read(trxs0)
+			if 'tr1' in dataTrace:
+				#If data exists on /tr1/, replace its dataTrace to now look at /xs0/
+				trxs0 = dataTrace.replace('/tr1/telemetry_days','/' + netpath + '/seed')
+				trxs0 = trxs0.replace(str(year) + '_' + str(jday).zfill(3), \
+					str(year) + '_' + str(jday).zfill(3) + '_' + net + '_' + sta)
+				trxs0 = read(trxs0)
+			else:
+				trxs0 = read(dataTrace)
 			if debug:
 				nptsBefore = nptsSum(trxs0)
 				print '\ntrXS0 points:', nptsBefore, '\n', trxs0
@@ -146,8 +164,6 @@ def checkAvail(string):
 					availIRIS = 0
 					for tr in trIRIS:
 						availIRIS += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)
-					if debug:
-						print 'IRIS avail: ' + str(availIRIS*100) + '%'	
 				except:
 					availIRIS = 0
 				if debug:

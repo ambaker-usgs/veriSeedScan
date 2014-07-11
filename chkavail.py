@@ -106,10 +106,12 @@ def checkAvail(string):
 	for index, dataTrace in enumerate(dataOnTr1):
 		#if True:
 		try:
+			if debug:
+				#To visually separate the channel location scans from one another
+				print '\n' + '*' * 80 + '\n' + '*' * 80
 #tr1 availability
 			trtr1 = read(dataTrace)
 			if debug:
-				print '\n' + '*' * 80 + '\n' + '*' * 80
 				nptsBefore = nptsSum(trtr1)
 				print '\ntrTR1 points:', nptsBefore, '\n', trtr1
 			availtr1 = 0

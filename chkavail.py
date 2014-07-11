@@ -5,6 +5,7 @@ import os
 import argparse
 
 from obspy import UTCDateTime, read
+from time import gmtime, strftime
 from obspy.fdsn import Client
 from obspy.neic import Client as ClientGCWB
 from obspy.neic import Client as ClientPCWB
@@ -22,6 +23,7 @@ from multiprocessing import Pool
 #
 ###################################################################################################
 
+print 'Scan started on', strftime("%Y-%m-%d %H:%M:%S", gmtime()), 'UTC'
 
 client = Client("IRIS")
 chan = '*[BL]H*'
@@ -334,3 +336,5 @@ for day in xrange(sday, eday + 1, 1):
 #Hwere we run everything as a multi-process
 pool = Pool()
 pool.map(checkAvail,sendToavail)
+
+print 'Scan ended on', strftime("%Y-%m-%d %H:%M:%S", gmtime()), 'UTC'

@@ -6,7 +6,8 @@ import argparse
 
 from obspy import UTCDateTime, read
 from obspy.fdsn import Client
-from obspy.neic import Client as ClientNEIC
+from obspy.neic import Client as ClientGCWB
+from obspy.neic import Client as ClientPCWB
 from multiprocessing import Pool
 
 ###################################################################################################
@@ -17,6 +18,7 @@ from multiprocessing import Pool
 #Methods
 #args()
 #checkAvail()
+#nptsSum()
 #
 ###################################################################################################
 
@@ -50,12 +52,16 @@ def args():
 		default = False, help="Run in debug mode")
 
 #Here is the NEIC CWB
-	parser.add_argument('-NEIC',action = "store_true",dest="neic", \
-		default = False, help="Check the NEIC CWB")
+	parser.add_argument('-GCWB',action = "store_true",dest="gcwb", \
+		default = False, help="Check the NEIC CWB (GCWB)")
+
+#Here is the PCWB
+	parser.add_argument('-PCWB',action = "store_true",dest="pcwb", \
+		default = False, help="Check the NEIC internal CWB (PCWB)")
 
 #Here is the ASL CWB
 	parser.add_argument('-ASL',action = "store_true",dest="asl", \
-		default = False, help="Check the ASL CWB")
+		default = False, help="Check the ASL CWB (ASLCWB)")
 
 #Here is the quality flag for Tyler
 	parser.add_argument('-q',action = "store",dest = "quality", \
@@ -144,7 +150,7 @@ def checkAvail(string):
 					print 'IRIS availability: ' + str(availIRIS*100) + '%'
 
 
-#Here we check the NEIC availability
+#Here we check the GCWB availability
 				availIRIS = round(availIRIS,3)
 				availxs0 = round(availxs0,3)
 				availtr1 = round(availtr1,3)
@@ -154,27 +160,48 @@ def checkAvail(string):
 							','  + str(availxs0*100) + ',' + str(availtr1*100)
 
 
-				if parserval.neic and not parserval.asl:
+				if parserval.pcwb:
 					try:
-						trNEIC = clientNEIC.getWaveform(net,trxs0[0].stats.station, \
+						trPCWB = clientPCWB.getWaveform(net,trxs0[0].stats.station, \
 							trxs0[0].stats.location, trxs0[0].stats.channel, \
 							startTime,endTime)
 						if debug:
-							nptsBefore = nptsSum(trNEIC)
-							print '\ntrNEIC points:', nptsBefore, '\n', trNEIC
-						availNEIC = 0
-						for tr in trNEIC:
-							availNEIC += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)
-						availNEIC = round(availNEIC,3)
+							nptsBefore = nptsSum(trPCWB)
+							print '\ntrPCWB points:', nptsBefore, '\n', trPCWB
+						availPCWB = 0
+						for tr in trPCWB:
+							availPCWB += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)
+						availPCWB = round(availPCWB,3)
 					except:
-						availNEIC = 0
+						print 'Unable to access PCWB'
+						availPCWB = 0
 					if debug:
-						print 'GCWB avialability:', availGCWB * 100
-					if availIRIS != availxs0 or availIRIS != availtr1 or availNEIC != availtr1:
-						availString += ',' + str(availNEIC*100) 
+						print 'PCWB avialability:', availPCWB * 100
+					if availIRIS != availxs0 or availIRIS != availtr1 or availPCWB != availtr1:
+						availString += ',' + str(availPCWB*100)
 						allAvailString.append(availString)
 						print availString
-				elif parserval.asl and not parserval.neic:
+				if parserval.gcwb and not parserval.asl:
+					try:
+						trGCWB = clientGCWB.getWaveform(net,trxs0[0].stats.station, \
+							trxs0[0].stats.location, trxs0[0].stats.channel, \
+							startTime,endTime)
+						if debug:
+							nptsBefore = nptsSum(trGCWB)
+							print '\ntrGCWB points:', nptsBefore, '\n', trGCWB
+						availGCWB = 0
+						for tr in trGCWB:
+							availGCWB += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)
+						availGCWB = round(availGCWB,3)
+					except:
+						availGCWB = 0
+					if debug:
+						print 'GCWB avialability:', availGCWB * 100
+					if availIRIS != availxs0 or availIRIS != availtr1 or availGCWB != availtr1:
+						availString += ',' + str(availGCWB*100) 
+						allAvailString.append(availString)
+						print availString
+				elif parserval.asl and not parserval.gcwb:
 					try:
 						trASL = clientASL.getWaveform(net,trxs0[0].stats.station, \
 							trxs0[0].stats.location, trxs0[0].stats.channel, \
@@ -195,7 +222,7 @@ def checkAvail(string):
 						allAvailString.append(availString)
 						print availString
 
-				elif parserval.asl and parserval.neic:
+				elif parserval.asl and parserval.gcwb:
 					trASL = clientASL.getWaveform(net,trxs0[0].stats.station, \
 						trxs0[0].stats.location, trxs0[0].stats.channel, \
 						startTime,endTime)
@@ -209,21 +236,21 @@ def checkAvail(string):
 						print 'ASLCWB avialability:', availASL * 100
 					availASL = round(availASL,3)
 					
-					trNEIC = clientNEIC.getWaveform(net,trxs0[0].stats.station, \
+					trGCWB = clientGCWB.getWaveform(net,trxs0[0].stats.station, \
 						trxs0[0].stats.location, trxs0[0].stats.channel, \
 						startTime,endTime)
 					if debug:
-						nptsBefore = nptsSum(trNEIC)
-						print '\ntrNEIC points:', nptsBefore, '\n', trNEIC
-					availNEIC = 0
-					for tr in trNEIC:
-						availNEIC += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)
+						nptsBefore = nptsSum(trGCWB)
+						print '\ntrGCWB points:', nptsBefore, '\n', trGCWB
+					availGCWB = 0
+					for tr in trGCWB:
+						availGCWB += tr.stats.npts / (24*60*60*tr.stats.sampling_rate)
 					if debug:
-						print 'NEIC avialability:', availNEIC * 100
-					availNEIC = round(availNEIC,3)
+						print 'GCWB avialability:', availGCWB * 100
+					availGCWB = round(availGCWB,3)
 					
-					if availIRIS != availxs0 or availIRIS != availtr1 or availNEIC != availtr1 or availASL != availtr1:
-						availString += ',' + str(availNEIC*100) + ',' + str(availASL*100)
+					if availIRIS != availxs0 or availIRIS != availtr1 or availGCWB != availtr1 or availASL != availtr1:
+						availString += ',' + str(availGCWB*100) + ',' + str(availASL*100)
 						allAvailString.append(availString)
 						print availString
 
@@ -270,11 +297,17 @@ else:
 	#This allows for one-day scans
 	eday = sday
 qualval = parserval.quality
-if parserval.neic:
-	clientNEIC = ClientNEIC()
+if parserval.gcwb:
+	print 'GCWB selected', parserval.gcwb
+	clientGCWB = ClientGCWB()
 
 if parserval.asl:
-	clientASL = ClientNEIC(host='136.177.121.27')
+	print 'ASLCWB selected', parserval.asl
+	clientASL = ClientGCWB(host='136.177.121.27')
+
+if parserval.pcwb:
+	print 'PCWB selected', parserval.pcwb
+	clientPCWB = ClientGCWB(host='136.177.24.70')
 
 
 #Lets write the header to the csv file
@@ -282,15 +315,15 @@ if os.path.isfile("avail" + str(year) + net):
 	os.remove("avail" + str(year) + net)
 
 f = open("avail" + str(year) + net + '.csv',"w")
-f.write("Sta,Loc,Chan,Year,Day,IRIS,xs,tr1")
-if parserval.neic and not parserval.asl:
-	f.write(",NEICCWB\n")
-elif parserval.asl and not parserval.asl:
-	f.write(",ASLCWB\n")
-elif parserval.neic and parserval.asl:
-	f.write(",NEICCWB,ASLCWB\n")
-else:
-	f.write("\n")
+header = "Sta,Loc,Chan,Year,Day,IRIS,xs,tr1"
+if parserval.pcwb:
+	header += ",PCWB"
+if parserval.gcwb:
+	header += ",GCWB"
+if parserval.asl:
+	header += ",ASLCWB"
+header += '\n'
+f.write(header)
 f.close()
 
 #Here we loop over the days

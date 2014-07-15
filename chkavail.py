@@ -84,7 +84,7 @@ def args():
 
 def checkDate(date):
 #Here is the heart of the program where the availability gets checked
-	allAvailString=[]
+	allAvailability = []
 
 #Here we parse the function arguments
 	year, day = date.split(",")
@@ -106,7 +106,6 @@ def checkDate(date):
 		print(globString)
 		for item in dataOnXSX:
 			print item
-
 
 	for tracePath in dataOnXSX:
 		#Parses through the different channels and locations for a given station
@@ -311,7 +310,7 @@ dateRange = []
 for day in xrange(sday, eday + 1, 1):
 	dateRange.append(str(year) + ',' + str(day).zfill(3))
 
-#Hwere we run everything as a multi-process
+#Here we run everything as a multi-process
 pool = Pool()
 pool.map(checkDate,dateRange)
 

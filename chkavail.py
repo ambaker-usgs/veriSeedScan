@@ -88,7 +88,7 @@ def checkDate(date):
 
 #Here we parse the function arguments
 	year, day = date.split(",")
-	print 'On day ' + str(jday).zfill(3) + ' ' + str(year)
+	print 'On day ' + day.zfill(3) + ' ' + year
 
 	startTime = UTCDateTime(year + day.zfill(3) + 'T00:00:00.000')
 	endTime = startTime + 24*60*60

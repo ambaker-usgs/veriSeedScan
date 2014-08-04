@@ -47,7 +47,6 @@ def getstations(sp,dateval):
 					if blkt.start_date <= dateval:
 						if len(str(blkt.end_date)) == 0 or dateval <= blkt.end_date:
 							stations.append(' '.join([stacall, blkt.location_identifier, blkt.channel_identifier]))
-	print stations, len(stations)
 	return stations
 
 
@@ -61,10 +60,11 @@ def querydatabase(sta,chan,loc,dateval):
 	#Here we query the database
 	connString = open('db.config', 'r').readline()
 	if debug: 
-		print "Connecting to", connString.split(',')[0]
-	host, user, pwd, db, port = connString.split(',')
-	conn = psycopg2.connect(host=host, user=user, password=pwd, database=db, port=port)
-	queryString = """
+		print 'Connecting to', connString.split(',')[0]
+	try:
+		host, user, pwd, db, port = connString.split(',')
+		conn = psycopg2.connect(host=host, user=user, password=pwd, database=db, port=port)
+		queryString = """
 SELECT "tblGroup".name, tblStation.name, tblChannel.name, tblMetric.name, value, tblDate.date
   FROM tblstation
   JOIN tblSensor on fkStationID = pkStationID
@@ -80,23 +80,28 @@ SELECT "tblGroup".name, tblStation.name, tblChannel.name, tblMetric.name, value,
   AND tblSensor.location = %s
   LIMIT 100
 """
-	date = str(dateval.year) + "-" + str(dateval.month).zfill(2) + "-" + \
-		str(dateval.day).zfill(2)
-	cursor = conn.cursor()
-	cursor.execute(queryString,(sta,chan,metric1,date,loc))
-	psdvalue1 = round(float(cursor.fetchone()[4]),2)
-	cursor.execute(queryString,(sta,chan,metric2,date,loc))
-	psdvalue2 = round(float(cursor.fetchone()[4]),2)
-	cursor.execute(queryString,(sta,chan,metric3,date,loc))
-	psdvalue3 = round(float(cursor.fetchone()[4]),2)
-	cursor.execute(queryString,(sta,chan,metric4,date,loc))
-	psdvalue4 = round(float(cursor.fetchone()[4]),2)
-	if debug:
-		print 'Here is our spectra value1: ' + str(psdvalue1) 
-		print 'Here is our spectra value2: ' + str(psdvalue2)
-		print 'Here is our spectra value3: ' + str(psdvalue3)
-		print 'Here is our spectra value4: ' + str(psdvalue4)
-	conn.close()
+		date = str(dateval.year) + "-" + str(dateval.month).zfill(2) + "-" + \
+			str(dateval.day).zfill(2)
+		cursor = conn.cursor()
+		cursor.execute(queryString,(sta,chan,metric1,date,loc))
+		psdvalue1 = round(float(cursor.fetchone()[4]),2)
+		cursor.execute(queryString,(sta,chan,metric2,date,loc))
+		psdvalue2 = round(float(cursor.fetchone()[4]),2)
+		cursor.execute(queryString,(sta,chan,metric3,date,loc))
+		psdvalue3 = round(float(cursor.fetchone()[4]),2)
+		cursor.execute(queryString,(sta,chan,metric4,date,loc))
+		psdvalue4 = round(float(cursor.fetchone()[4]),2)
+		if debug:
+			print 'Here is our spectra value1: ' + str(psdvalue1) 
+			print 'Here is our spectra value2: ' + str(psdvalue2)
+			print 'Here is our spectra value3: ' + str(psdvalue3)
+			print 'Here is our spectra value4: ' + str(psdvalue4)
+		conn.close()
+	except:
+		psdvalue1 = 0
+		psdvalue2 = 0
+		psdvalue3 = 0
+		psdvalue4 = 0
 	return psdvalue1, psdvalue2, psdvalue3, psdvalue4
 
 def computePSD(sp,net,sta,loc,chan,dateval):
@@ -113,53 +118,60 @@ def computePSD(sp,net,sta,loc,chan,dateval):
 	permax3 = 110
 	permin4 = 200
 	permax4 = 500
+	
+	try:
 
-	#Get the response and compute amplitude response	
-	paz=getPAZ2(sp,net,sta,loc,chan,dateval)
-	respval = pazToFreqResp(paz['poles'],paz['zeros'],paz['sensitivity']*paz['gain'], \
-		t_samp = 1, nfft = lenfft,freq=False)[1:]
-	respval = numpy.absolute(respval*numpy.conjugate(respval))
+		#Get the response and compute amplitude response	
+		paz=getPAZ2(sp,net,sta,loc,chan,dateval)
+		respval = pazToFreqResp(paz['poles'],paz['zeros'],paz['sensitivity']*paz['gain'], \
+			t_samp = 1, nfft = lenfft,freq=False)[1:]
+		respval = numpy.absolute(respval*numpy.conjugate(respval))
 
-	#Get the data to compute the PSD
-	readDataString = '/xs0/seed/' + net + '_' + sta + '/' + str(dateval.year) + '/' + \
-		str(dateval.year) + '_' + str(dateval.julday).zfill(3) + '_' + net + '_' + \
-		sta + '/' + loc + '_' + chan + '*.seed'
-	datafiles = glob.glob(readDataString)
-	st = Stream()
-	for datafile in datafiles:
-		st += read(datafile)
-	st.merge(method=-1)
+		#Get the data to compute the PSD
+		readDataString = '/xs0/seed/' + net + '_' + sta + '/' + str(dateval.year) + '/' + \
+			str(dateval.year) + '_' + str(dateval.julday).zfill(3) + '_' + net + '_' + \
+			sta + '/' + loc + '_' + chan + '*.seed'
+		datafiles = glob.glob(readDataString)
+		st = Stream()
+		for datafile in datafiles:
+			st += read(datafile)
+		st.merge(method=-1)
 
-	#Compute the PSD
-	cpval,fre = psd(st[0].data,NFFT=lenfft,Fs=1,noverlap=lenol,scale_by_freq=True)
-	per = 1/fre[1:]
-	cpval = 10*numpy.log10(((2*pi*fre[1:])**2)*cpval[1:]/respval)
-	perminind1 = numpy.abs(per-permin1).argmin()
-	permaxind1 = numpy.abs(per-permax1).argmin()
-	perminind2 = numpy.abs(per-permin2).argmin()
-	permaxind2 = numpy.abs(per-permax2).argmin()
-	perminind3 = numpy.abs(per-permin3).argmin()
-	permaxind3 = numpy.abs(per-permax3).argmin()
-	perminind4 = numpy.abs(per-permin4).argmin()
-	permaxind4 = numpy.abs(per-permax4).argmin()
-	perNLNM,NLNM = get_NLNM()
-	perNLNMminind1 = numpy.abs(perNLNM-permin1).argmin()
-	perNLNMmaxind1 = numpy.abs(perNLNM-permax1).argmin()
-	perNLNMminind2 = numpy.abs(perNLNM-permin2).argmin()
-	perNLNMmaxind2 = numpy.abs(perNLNM-permax2).argmin()
-	perNLNMminind3 = numpy.abs(perNLNM-permin3).argmin()
-	perNLNMmaxind3 = numpy.abs(perNLNM-permax3).argmin()
-	perNLNMminind4 = numpy.abs(perNLNM-permin4).argmin()
-	perNLNMmaxind4 = numpy.abs(perNLNM-permax4).argmin()
+		#Compute the PSD
+		cpval,fre = psd(st[0].data,NFFT=lenfft,Fs=1,noverlap=lenol,scale_by_freq=True)
+		per = 1/fre[1:]
+		cpval = 10*numpy.log10(((2*pi*fre[1:])**2)*cpval[1:]/respval)
+		perminind1 = numpy.abs(per-permin1).argmin()
+		permaxind1 = numpy.abs(per-permax1).argmin()
+		perminind2 = numpy.abs(per-permin2).argmin()
+		permaxind2 = numpy.abs(per-permax2).argmin()
+		perminind3 = numpy.abs(per-permin3).argmin()
+		permaxind3 = numpy.abs(per-permax3).argmin()
+		perminind4 = numpy.abs(per-permin4).argmin()
+		permaxind4 = numpy.abs(per-permax4).argmin()
+		perNLNM,NLNM = get_NLNM()
+		perNLNMminind1 = numpy.abs(perNLNM-permin1).argmin()
+		perNLNMmaxind1 = numpy.abs(perNLNM-permax1).argmin()
+		perNLNMminind2 = numpy.abs(perNLNM-permin2).argmin()
+		perNLNMmaxind2 = numpy.abs(perNLNM-permax2).argmin()
+		perNLNMminind3 = numpy.abs(perNLNM-permin3).argmin()
+		perNLNMmaxind3 = numpy.abs(perNLNM-permax3).argmin()
+		perNLNMminind4 = numpy.abs(perNLNM-permin4).argmin()
+		perNLNMmaxind4 = numpy.abs(perNLNM-permax4).argmin()
 
-	cpval1 = round(numpy.average(cpval[permaxind1:perminind1]) - \
-		numpy.average(NLNM[perNLNMmaxind1:perNLNMminind1]),2)
-	cpval2 = round(numpy.average(cpval[permaxind2:perminind2]) - \
-		numpy.average(NLNM[perNLNMmaxind2:perNLNMminind2]),2)
-	cpval3 = round(numpy.average(cpval[permaxind3:perminind3]) - \
-		numpy.average(NLNM[perNLNMmaxind3:perNLNMminind3]),2)
-	cpval4 = round(numpy.average(cpval[permaxind4:perminind4]) - \
-		numpy.average(NLNM[perNLNMmaxind4:perNLNMminind4]),2)
+		cpval1 = round(numpy.average(cpval[permaxind1:perminind1]) - \
+			numpy.average(NLNM[perNLNMmaxind1:perNLNMminind1]),2)
+		cpval2 = round(numpy.average(cpval[permaxind2:perminind2]) - \
+			numpy.average(NLNM[perNLNMmaxind2:perNLNMminind2]),2)
+		cpval3 = round(numpy.average(cpval[permaxind3:perminind3]) - \
+			numpy.average(NLNM[perNLNMmaxind3:perNLNMminind3]),2)
+		cpval4 = round(numpy.average(cpval[permaxind4:perminind4]) - \
+			numpy.average(NLNM[perNLNMmaxind4:perNLNMminind4]),2)
+	except:
+		cpval1 = 0
+		cpval2 = 0
+		cpval3 = 0
+		cpval4 = 0
 	return cpval1, cpval2, cpval3,cpval4
 
 
@@ -241,12 +253,12 @@ def getPAZ2(sp,net,sta,loc,chan,dateval):
         return data
 
 def runmulti(slc):
-	slc = slc.split()
-	sta = slc[0]
-	loc = slc[1]
-	chan = slc[2]
-	#Here we try to get the database values as well as compute the values
 	try:
+		slc = slc.split()
+		sta = slc[0]
+		loc = slc[1]
+		chan = slc[2]
+		#Here we try to get the database values as well as compute the values
 		dbres1, dbres2, dbres3, dbres4 = querydatabase(sta, chan, loc, dateval)
 		ppsdvalue1, ppsdvalue2, ppsdvalue3, ppsdvalue4 =computePSD(sp,net,sta,loc,chan,dateval)
 		#Now we write the results
@@ -258,7 +270,7 @@ def runmulti(slc):
 			str(dbres4) + ',' + str(ppsdvalue4) + '\n')
 		f.close()
 	except:
-		print 'Problem with: ' + sta + ' ' + loc + ' ' + chan + ' ' + str(dateval.year) + \
+		print 'Problem with: ' + sta + ' ' + str(dateval.year) + \
 			' ' + str(dateval.julday).zfill(3)
 	return
 
@@ -270,26 +282,27 @@ if __name__ == '__main__':
 	debug = True
 
 	#Here is the network we read the dataless from
-	net ='US'
+	net ='IU'
 	datalessloc = '/APPS/metadata/SEED/'
 	try:
-		sp = Parser(datalessloc + net + ".dataless")
+		sp = Parser(datalessloc + net + '.dataless')
 	except:
-		print "Can not read the dataless."
+		print 'Can not read the dataless'
 		exit(0)
 	
 	#The start day we are going to get power values from
-	datevalstart = UTCDateTime("2014-150T00:00:00.0")
+	datevalstart = UTCDateTime('2014-150T00:00:00.0')
 	#How many days we plan to run through
-	daystogo = 1
+	daystogo = 30
 	for ind in range(daystogo):
 		dateval = datevalstart + ind*24*60*60
 		#Get station list with location and channels for the current day
 		stationList = getstations(sp,dateval)
-		pool = Pool(12)
+		pool = Pool()
 		#Run the function for that day
-		# for station in stationList:
-		# 	runmulti(station)
+	
 		pool.map(runmulti,stationList)
+
+
 
 print 'Scan terminated on', strftime('%Y-%m-%d %H:%M:%S', gmtime()), 'UTC'

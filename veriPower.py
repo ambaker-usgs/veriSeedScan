@@ -128,9 +128,13 @@ def computePSD(sp,net,sta,loc,chan,dateval):
 		respval = numpy.absolute(respval*numpy.conjugate(respval))
 
 		#Get the data to compute the PSD
-		readDataString = '/xs0/seed/' + net + '_' + sta + '/' + str(dateval.year) + '/' + \
-			str(dateval.year) + '_' + str(dateval.julday).zfill(3) + '_' + net + '_' + \
-			sta + '/' + loc + '_' + chan + '*.seed'
+		if net in set(['IW','NE','US']):
+			locStr = '/xs1'
+		else:
+			locStr = '/xs0'
+		readDataString = locStr + '/seed/' + net + '_' + sta + '/' + str(dateval.year) + \
+			'/' + str(dateval.year) + '_' + str(dateval.julday).zfill(3) + '_' + net + \
+			'_' + sta + '/' + loc + '_' + chan + '*.seed'
 		datafiles = glob.glob(readDataString)
 		st = Stream()
 		for datafile in datafiles:
@@ -254,6 +258,7 @@ def getPAZ2(sp,net,sta,loc,chan,dateval):
 
 def runmulti(slc):
 	try:
+
 		slc = slc.split()
 		sta = slc[0]
 		loc = slc[1]
@@ -282,7 +287,7 @@ if __name__ == '__main__':
 	debug = True
 
 	#Here is the network we read the dataless from
-	net ='IU'
+	net ='US'
 	datalessloc = '/APPS/metadata/SEED/'
 	try:
 		sp = Parser(datalessloc + net + '.dataless')

@@ -176,7 +176,7 @@ def checkAvailability(IDstring, tracePath, startTime, endTime):
 		availability = 0
 		#Merges with method 0 to appropriately handle data overlaps
 		#Mostly an issue with IRIS data
-		traces.merge(method = -1)
+		traces.merge(method=-1)
 		if debug:
 			nptsSamples   = 0
 			sampleRate    = 0
@@ -311,7 +311,7 @@ for day in xrange(sday, eday + 1, 1):
 	dateRange.append(str(year) + ',' + str(day).zfill(3))
 
 #Here we run everything as a multi-process
-pool = Pool()
+pool = Pool(20)
 pool.map(checkDate,dateRange)
 
 print 'Scan ended on', strftime('%Y-%m-%d %H:%M:%S', gmtime()), 'UTC'

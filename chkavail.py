@@ -176,6 +176,11 @@ def checkAvailability(IDstring, tracePath, startTime, endTime):
 		availability = 0
 		#Merges with method 0 to appropriately handle data overlaps
 		#Mostly an issue with IRIS data
+		#First we remove empty traces
+		for tr in traces:
+			if tr.stats.npts == 0:
+				traces.remove(tr)
+		#Now we try to merge
 		traces.merge(method=-1)
 		if debug:
 			nptsSamples   = 0

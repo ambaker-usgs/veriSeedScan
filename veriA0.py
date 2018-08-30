@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #Importing packages
-from obspy.xseed import Parser		#Dataless seed reader
+from obspy.io.xseed import Parser	#Dataless seed reader
 from obspy.core import UTCDateTime	#Timing conventions
 from time import gmtime, strftime	#Timing conventions
 from multiprocessing import Pool	#Multiprocessing
@@ -45,7 +45,7 @@ def processStation(station):
 				endDate = 'present'
 		elif blockette.id == 53:
 			a0frequency        = blockette.normalization_frequency
-			
+
 		elif blockette.id == 58:
 			if   blockette.stage_sequence_number == 1:
 				gainFrequency1 = blockette.frequency
@@ -59,13 +59,13 @@ def processStation(station):
 					warning += ' A0HZ: ' + str(a0frequency) + ', S1GHZ:' + str(gainFrequency1)
 					warning += ', S0GHZ: ' + str(gainFrequency0)
 					print warning
-					
+
 def cleanLocationIdentifier(lID):
 	#If there is no location ID, it writes spaces equaling a valid location ID
 	if len(lID) == 0:
 		return '  '
 	return lID
-	
+
 def cleanDate(startDate, endDate):
 	#Turns the UTCDateTime into human readable, showing date and time
 	sdate = str(startDate)
@@ -76,7 +76,7 @@ def cleanDate(startDate, endDate):
 		edate = str(endDate)
 		edate = ' to ' + edate[:4]+ edate[5:7] + edate[8:10] + ' ' + edate[11:19]
 	return sdate + edate
-			
+
 
 def parseDataless(datalessLocation):
 	#Reads the dataless seed with optional debug verbosity
